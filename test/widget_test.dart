@@ -1,30 +1,52 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:gifted_property/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Gifted Property home page loads', (WidgetTester tester) async {
+    await tester.pumpWidget(const GiftedPropertyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('GIFTED PROPERTY'), findsOneWidget);
+    expect(find.text('Featured Properties'), findsOneWidget);
+    expect(find.text('FIND A PROPERTY\nWORTH INVESTING IN.'), findsOneWidget);
+    expect(find.text('Properties'), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+  testWidgets('Properties navigation opens properties page',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const GiftedPropertyApp());
+
+    await tester.tap(find.text('Properties').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Our Properties'), findsOneWidget);
+    expect(
+      find.text(
+        'Explore premium properties available through Gifted Property.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Property search filters results by location',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const GiftedPropertyApp());
+
+    await tester.tap(find.text('Properties').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('5 Bedroom Luxury Home'), findsOneWidget);
+    expect(find.text('4 Bedroom Terrace Duplex'), findsOneWidget);
+    expect(find.text('Off Plan Villa'), findsOneWidget);
+
+    await tester.enterText(
+      find.byType(TextField),
+      'Guzape',
+    );
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('4 Bedroom Terrace Duplex'), findsOneWidget);
+    expect(find.text('5 Bedroom Luxury Home'), findsNothing);
+    expect(find.text('Off Plan Villa'), findsNothing);
   });
 }

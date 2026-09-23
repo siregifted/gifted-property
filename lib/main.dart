@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'data/properties.dart';
 import 'widgets/property_card.dart';
+import 'pages/properties_page.dart';
 
 void main() {
   runApp(const GiftedPropertyApp());
@@ -297,86 +298,3 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class PropertiesPage extends StatelessWidget {
-  const PropertiesPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0B1F33),
-        foregroundColor: Colors.white,
-        title: const Text(
-          'Properties',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(40),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 1100,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Our Properties',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0B1F33),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Explore premium properties available through Gifted Property.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (constraints.maxWidth < 700) {
-                      return Column(
-                        children: [
-                          for (final property in properties) ...[
-                            PropertyCard(property: property),
-                            const SizedBox(height: 20),
-                          ],
-                        ],
-                      );
-                    }
-
-                    return GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: properties.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 20,
-                        mainAxisSpacing: 20,
-                        childAspectRatio: 0.78,
-                      ),
-                      itemBuilder: (context, index) {
-                        return PropertyCard(
-                          property: properties[index],
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

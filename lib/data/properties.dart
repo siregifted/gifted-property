@@ -10,7 +10,7 @@ const List<Property> properties = [
     propertyType: 'Detached Duplex',
     description:
         'A premium 5 bedroom luxury home designed for comfortable living and long term value.',
-    imageUrl: '',
+    imageUrls: [],
     features: [
       '5 Bedrooms',
       '6 Bathrooms',
@@ -20,7 +20,6 @@ const List<Property> properties = [
     ],
     status: 'Available',
   ),
-
   Property(
     title: '4 Bedroom Terrace Duplex',
     location: 'Guzape, Abuja',
@@ -30,7 +29,7 @@ const List<Property> properties = [
     propertyType: 'Terrace Duplex',
     description:
         'A contemporary 4 bedroom terrace duplex in a premium Abuja location.',
-    imageUrl: '',
+    imageUrls: [],
     features: [
       '4 Bedrooms',
       '5 Bathrooms',
@@ -40,7 +39,6 @@ const List<Property> properties = [
     ],
     status: 'Available',
   ),
-
   Property(
     title: 'Off Plan Villa',
     location: 'Jahi, Abuja',
@@ -50,7 +48,7 @@ const List<Property> properties = [
     propertyType: 'Off Plan Villa',
     description:
         'An off plan villa opportunity designed for buyers seeking modern living and property investment.',
-    imageUrl: '',
+    imageUrls: [],
     features: [
       '4 Bedrooms',
       '5 Bathrooms',

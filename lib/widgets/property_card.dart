@@ -89,21 +89,32 @@ class PropertyCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Row(
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 8,
                     children: [
-                      const Icon(
-                        Icons.bed_outlined,
-                        size: 18,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.bed_outlined,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 4),
+                          Text('${property.bedrooms} Beds'),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      Text('${property.bedrooms} Beds'),
-                      const SizedBox(width: 16),
-                      const Icon(
-                        Icons.bathtub_outlined,
-                        size: 18,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.bathtub_outlined,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 4),
+                          Text('${property.bathrooms} Baths'),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      Text('${property.bathrooms} Baths'),
                     ],
                   ),
                   const SizedBox(height: 15),

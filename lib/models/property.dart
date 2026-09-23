@@ -6,7 +6,7 @@ class Property {
   final int bathrooms;
   final String propertyType;
   final String description;
-  final String imageUrl;
+  final List<String> imageUrls;
   final List<String> features;
   final String status;
 
@@ -18,7 +18,7 @@ class Property {
     required this.bathrooms,
     required this.propertyType,
     required this.description,
-    required this.imageUrl,
+    required this.imageUrls,
     required this.features,
     required this.status,
   });

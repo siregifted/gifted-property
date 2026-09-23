@@ -2,13 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../models/property.dart';
 
-class PropertyDetailsPage extends StatelessWidget {
+class PropertyDetailsPage extends StatefulWidget {
   final Property property;
 
   const PropertyDetailsPage({
     super.key,
     required this.property,
   });
+
+  @override
+  State<PropertyDetailsPage> createState() => _PropertyDetailsPageState();
+}
+
+class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
+  int _selectedImageIndex = 0;
 
   String _formatPrice(int price) {
     if (price >= 1000000) {
@@ -20,6 +27,8 @@ class PropertyDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final property = widget.property;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF0B1F33),
@@ -40,16 +49,8 @@ class PropertyDetailsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: double.infinity,
-                  height: 400,
-                  color: const Color(0xFFE8EEF3),
-                  child: const Icon(
-                    Icons.home_work,
-                    size: 120,
-                    color: Color(0xFF0B1F33),
-                  ),
-                ),
+                _buildGallery(property),
+
                 Padding(
                   padding: const EdgeInsets.all(40),
                   child: Column(
@@ -64,6 +65,7 @@ class PropertyDetailsPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
+
                       Row(
                         children: [
                           const Icon(
@@ -71,16 +73,20 @@ class PropertyDetailsPage extends StatelessWidget {
                             color: Colors.black54,
                           ),
                           const SizedBox(width: 6),
-                          Text(
-                            property.location,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              color: Colors.black54,
+                          Expanded(
+                            child: Text(
+                              property.location,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                color: Colors.black54,
+                              ),
                             ),
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 20),
+
                       Text(
                         _formatPrice(property.price),
                         style: const TextStyle(
@@ -89,7 +95,9 @@ class PropertyDetailsPage extends StatelessWidget {
                           color: Color(0xFF0B1F33),
                         ),
                       ),
+
                       const SizedBox(height: 25),
+
                       Wrap(
                         spacing: 12,
                         runSpacing: 12,
@@ -112,7 +120,9 @@ class PropertyDetailsPage extends StatelessWidget {
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 35),
+
                       const Text(
                         'Description',
                         style: TextStyle(
@@ -121,7 +131,9 @@ class PropertyDetailsPage extends StatelessWidget {
                           color: Color(0xFF0B1F33),
                         ),
                       ),
+
                       const SizedBox(height: 12),
+
                       Text(
                         property.description,
                         style: const TextStyle(
@@ -130,7 +142,9 @@ class PropertyDetailsPage extends StatelessWidget {
                           color: Colors.black87,
                         ),
                       ),
+
                       const SizedBox(height: 35),
+
                       const Text(
                         'Features',
                         style: TextStyle(
@@ -139,7 +153,9 @@ class PropertyDetailsPage extends StatelessWidget {
                           color: Color(0xFF0B1F33),
                         ),
                       ),
+
                       const SizedBox(height: 15),
+
                       ...property.features.map(
                         (feature) {
                           return Padding(
@@ -166,7 +182,9 @@ class PropertyDetailsPage extends StatelessWidget {
                           );
                         },
                       ),
+
                       const SizedBox(height: 30),
+
                       Row(
                         children: [
                           Expanded(
@@ -209,6 +227,180 @@ class PropertyDetailsPage extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGallery(Property property) {
+    if (property.imageUrls.isEmpty) {
+      return Container(
+        width: double.infinity,
+        height: 500,
+        color: const Color(0xFFE8EEF3),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.photo_library_outlined,
+              size: 90,
+              color: Color(0xFF0B1F33),
+            ),
+            SizedBox(height: 15),
+            Text(
+              'Property images coming soon',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0B1F33),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final selectedImageIndex = _selectedImageIndex < property.imageUrls.length ? _selectedImageIndex : 0;
+
+    return Column(
+      children: [
+        Stack(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 500,
+              child: Image.network(
+                property.imageUrls[selectedImageIndex],
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: const Color(0xFFE8EEF3),
+                    child: const Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        size: 90,
+                        color: Color(0xFF0B1F33),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            if (property.imageUrls.length > 1)
+              Positioned(
+                left: 20,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: _galleryButton(
+                    icon: Icons.arrow_back_ios_new,
+                    onPressed: () {
+                      setState(() {
+                        _selectedImageIndex =
+                            (_selectedImageIndex -
+                                    1 +
+                                    property.imageUrls.length) %
+                                property.imageUrls.length;
+                      });
+                    },
+                  ),
+                ),
+              ),
+
+            if (property.imageUrls.length > 1)
+              Positioned(
+                right: 20,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: _galleryButton(
+                    icon: Icons.arrow_forward_ios,
+                    onPressed: () {
+                      setState(() {
+                        _selectedImageIndex =
+                            (_selectedImageIndex + 1) %
+                                property.imageUrls.length;
+                      });
+                    },
+                  ),
+                ),
+              ),
+          ],
+        ),
+
+        if (property.imageUrls.length > 1)
+          Padding(
+            padding: const EdgeInsets.all(15),
+            child: SizedBox(
+              height: 90,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: property.imageUrls.length,
+                separatorBuilder: (context, index) {
+                  return const SizedBox(width: 12);
+                },
+                itemBuilder: (context, index) {
+                  final isSelected =
+                      index == _selectedImageIndex;
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedImageIndex = index;
+                      });
+                    },
+                    child: Container(
+                      width: 120,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFF0B1F33)
+                              : Colors.transparent,
+                          width: 3,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.network(
+                          property.imageUrls[index],
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (context, error, stackTrace) {
+                            return Container(
+                              color: const Color(0xFFE8EEF3),
+                              child: const Icon(
+                                Icons.broken_image_outlined,
+                                color: Color(0xFF0B1F33),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _galleryButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.black54,
+      shape: const CircleBorder(),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(
+          icon,
+          color: Colors.white,
+          size: 22,
         ),
       ),
     );
