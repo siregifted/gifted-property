@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../data/properties.dart';
 import '../models/property.dart';
+import '../repositories/property_repository.dart';
 import '../widgets/property_card.dart';
 
 class PropertiesPage extends StatefulWidget {
@@ -12,16 +12,19 @@ class PropertiesPage extends StatefulWidget {
 }
 
 class _PropertiesPageState extends State<PropertiesPage> {
+  final PropertyRepository _propertyRepository = const PropertyRepository();
+
   String _searchQuery = '';
 
   List<Property> get _filteredProperties {
     final query = _searchQuery.trim().toLowerCase();
+    final allProperties = _propertyRepository.getProperties();
 
     if (query.isEmpty) {
-      return properties;
+      return allProperties;
     }
 
-    return properties.where((property) {
+    return allProperties.where((property) {
       return property.title.toLowerCase().contains(query) ||
           property.location.toLowerCase().contains(query) ||
           property.propertyType.toLowerCase().contains(query);
@@ -38,18 +41,14 @@ class _PropertiesPageState extends State<PropertiesPage> {
         foregroundColor: Colors.white,
         title: const Text(
           'Properties',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(40),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 1100,
-            ),
+            constraints: const BoxConstraints(maxWidth: 1100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -64,10 +63,7 @@ class _PropertiesPageState extends State<PropertiesPage> {
                 const SizedBox(height: 10),
                 const Text(
                   'Explore premium properties available through Gifted Property.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
                 const SizedBox(height: 30),
                 TextField(
@@ -101,10 +97,7 @@ class _PropertiesPageState extends State<PropertiesPage> {
                     child: Center(
                       child: Text(
                         'No properties found.',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.black54,
-                        ),
+                        style: TextStyle(fontSize: 18, color: Colors.black54),
                       ),
                     ),
                   )
@@ -128,11 +121,11 @@ class _PropertiesPageState extends State<PropertiesPage> {
                         itemCount: filteredProperties.length,
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 20,
-                          mainAxisSpacing: 20,
-                          mainAxisExtent: 520,
-                        ),
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 20,
+                              mainAxisSpacing: 20,
+                              mainAxisExtent: 520,
+                            ),
                         itemBuilder: (context, index) {
                           return PropertyCard(
                             property: filteredProperties[index],
