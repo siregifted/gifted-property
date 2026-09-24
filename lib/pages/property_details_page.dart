@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/property.dart';
 import 'enquiry_page.dart';
+import 'inspection_page.dart';
 
 class PropertyDetailsPage extends StatefulWidget {
   final Property property;
@@ -171,7 +172,15 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
                         children: [
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        InspectionPage(property: property),
+                                  ),
+                                );
+                              },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF0B1F33),
                                 foregroundColor: Colors.white,
