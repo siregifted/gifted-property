@@ -8,8 +8,7 @@ const List<Property> properties = [
     bedrooms: 5,
     bathrooms: 6,
     propertyType: 'Detached Duplex',
-    description:
-        'A premium 5 bedroom luxury home designed for comfortable living and long term value.',
+    description: 'A premium 5 bedroom luxury home designed for comfortable living and long term value.',
     imageUrls: [],
     features: [
       '5 Bedrooms',
@@ -46,8 +45,7 @@ const List<Property> properties = [
     bedrooms: 4,
     bathrooms: 5,
     propertyType: 'Off Plan Villa',
-    description:
-        'An off plan villa opportunity designed for buyers seeking modern living and property investment.',
+    description: 'An off plan villa opportunity designed for buyers seeking modern living and property investment.',
     imageUrls: [],
     features: [
       '4 Bedrooms',

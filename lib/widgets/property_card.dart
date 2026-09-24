@@ -6,10 +6,7 @@ import '../pages/property_details_page.dart';
 class PropertyCard extends StatelessWidget {
   final Property property;
 
-  const PropertyCard({
-    super.key,
-    required this.property,
-  });
+  const PropertyCard({super.key, required this.property});
 
   String _formatPrice(int price) {
     if (price >= 1000000) {
@@ -29,9 +26,7 @@ class PropertyCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => PropertyDetailsPage(
-                property: property,
-              ),
+              builder: (context) => PropertyDetailsPage(property: property),
             ),
           );
         },
@@ -72,9 +67,7 @@ class PropertyCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           property.location,
-                          style: const TextStyle(
-                            color: Colors.black54,
-                          ),
+                          style: const TextStyle(color: Colors.black54),
                         ),
                       ),
                     ],
@@ -96,10 +89,7 @@ class PropertyCard extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.bed_outlined,
-                            size: 18,
-                          ),
+                          const Icon(Icons.bed_outlined, size: 18),
                           const SizedBox(width: 4),
                           Text('${property.bedrooms} Beds'),
                         ],
@@ -107,10 +97,7 @@ class PropertyCard extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.bathtub_outlined,
-                            size: 18,
-                          ),
+                          const Icon(Icons.bathtub_outlined, size: 18),
                           const SizedBox(width: 4),
                           Text('${property.bathrooms} Baths'),
                         ],

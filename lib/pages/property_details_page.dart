@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../models/property.dart';
+import 'enquiry_page.dart';
 
 class PropertyDetailsPage extends StatefulWidget {
   final Property property;
 
-  const PropertyDetailsPage({
-    super.key,
-    required this.property,
-  });
+  const PropertyDetailsPage({super.key, required this.property});
 
   @override
   State<PropertyDetailsPage> createState() => _PropertyDetailsPageState();
@@ -35,17 +33,13 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
         foregroundColor: Colors.white,
         title: const Text(
           'Property Details',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 1100,
-            ),
+            constraints: const BoxConstraints(maxWidth: 1100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -110,14 +104,8 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
                             Icons.bathtub_outlined,
                             '${property.bathrooms} Bathrooms',
                           ),
-                          _infoChip(
-                            Icons.home_outlined,
-                            property.propertyType,
-                          ),
-                          _infoChip(
-                            Icons.verified_outlined,
-                            property.status,
-                          ),
+                          _infoChip(Icons.home_outlined, property.propertyType),
+                          _infoChip(Icons.verified_outlined, property.status),
                         ],
                       ),
 
@@ -156,32 +144,26 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
 
                       const SizedBox(height: 15),
 
-                      ...property.features.map(
-                        (feature) {
-                          return Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: 12,
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.check_circle_outline,
-                                  color: Color(0xFF0B1F33),
+                      ...property.features.map((feature) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.check_circle_outline,
+                                color: Color(0xFF0B1F33),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  feature,
+                                  style: const TextStyle(fontSize: 16),
                                 ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    feature,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
 
                       const SizedBox(height: 30),
 
@@ -191,32 +173,34 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
                             child: ElevatedButton(
                               onPressed: () {},
                               style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    const Color(0xFF0B1F33),
+                                backgroundColor: const Color(0xFF0B1F33),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 18,
                                 ),
                               ),
-                              child: const Text(
-                                'Schedule Inspection',
-                              ),
+                              child: const Text('Schedule Inspection'),
                             ),
                           ),
                           const SizedBox(width: 15),
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        EnquiryPage(property: property),
+                                  ),
+                                );
+                              },
                               style: OutlinedButton.styleFrom(
-                                foregroundColor:
-                                    const Color(0xFF0B1F33),
+                                foregroundColor: const Color(0xFF0B1F33),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 18,
                                 ),
                               ),
-                              child: const Text(
-                                'Contact Agent',
-                              ),
+                              child: const Text('Contact Agent'),
                             ),
                           ),
                         ],
@@ -260,7 +244,9 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
       );
     }
 
-    final selectedImageIndex = _selectedImageIndex < property.imageUrls.length ? _selectedImageIndex : 0;
+    final selectedImageIndex = _selectedImageIndex < property.imageUrls.length
+        ? _selectedImageIndex
+        : 0;
 
     return Column(
       children: [
@@ -299,9 +285,9 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
                       setState(() {
                         _selectedImageIndex =
                             (_selectedImageIndex -
-                                    1 +
-                                    property.imageUrls.length) %
-                                property.imageUrls.length;
+                                1 +
+                                property.imageUrls.length) %
+                            property.imageUrls.length;
                       });
                     },
                   ),
@@ -320,7 +306,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
                       setState(() {
                         _selectedImageIndex =
                             (_selectedImageIndex + 1) %
-                                property.imageUrls.length;
+                            property.imageUrls.length;
                       });
                     },
                   ),
@@ -341,8 +327,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
                   return const SizedBox(width: 12);
                 },
                 itemBuilder: (context, index) {
-                  final isSelected =
-                      index == _selectedImageIndex;
+                  final isSelected = index == _selectedImageIndex;
 
                   return GestureDetector(
                     onTap: () {
@@ -366,8 +351,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
                         child: Image.network(
                           property.imageUrls[index],
                           fit: BoxFit.cover,
-                          errorBuilder:
-                              (context, error, stackTrace) {
+                          errorBuilder: (context, error, stackTrace) {
                             return Container(
                               color: const Color(0xFFE8EEF3),
                               child: const Icon(
@@ -397,24 +381,14 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
       shape: const CircleBorder(),
       child: IconButton(
         onPressed: onPressed,
-        icon: Icon(
-          icon,
-          color: Colors.white,
-          size: 22,
-        ),
+        icon: Icon(icon, color: Colors.white, size: 22),
       ),
     );
   }
 
-  Widget _infoChip(
-    IconData icon,
-    String label,
-  ) {
+  Widget _infoChip(IconData icon, String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 10,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFFF4F6F8),
         borderRadius: BorderRadius.circular(8),
@@ -422,11 +396,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 19,
-            color: const Color(0xFF0B1F33),
-          ),
+          Icon(icon, size: 19, color: const Color(0xFF0B1F33)),
           const SizedBox(width: 7),
           Text(label),
         ],
