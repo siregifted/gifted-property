@@ -7,17 +7,49 @@ const _locationSurface = Color(0xFFF6F8FB);
 const _locationBorder = Color(0xFFE4E9F0);
 
 const _premiumLocations = <String>[
-  'Maitama', 'Asokoro', 'Wuse 1', 'Wuse 2', 'Guzape',
-  'Katampe', 'Katampe Extension', 'Jabi', 'Central Area', 'Garki',
+  'Maitama',
+  'Asokoro',
+  'Wuse 1',
+  'Wuse 2',
+  'Guzape',
+  'Katampe',
+  'Katampe Extension',
+  'Jabi',
+  'Central Area',
+  'Garki',
 ];
 
 const _residentialLocations = <String>[
-  'Gwarinpa', 'Lokogoma', 'Galadimawa', 'Apo', 'Life Camp',
-  'Karsana', 'Kaba District', 'Dakwo', 'Kabusa', 'Durumi',
-  'Dawaki', 'Gaduwa', 'Mbora', 'Utako', 'Kado', 'Dutse Alhaji',
-  'Kubwa', 'Lugbe', 'Pyakasa', 'Airport Road', 'Karu', 'Nyanya',
-  'Kurudu', 'Orozo', 'Karshi', 'Idu', 'Dei-Dei', 'Zuba',
-  'Bwari', 'Gwagwalada',
+  'Gwarinpa',
+  'Lokogoma',
+  'Galadimawa',
+  'Apo',
+  'Life Camp',
+  'Karsana',
+  'Kaba District',
+  'Dakwo',
+  'Kabusa',
+  'Durumi',
+  'Dawaki',
+  'Gaduwa',
+  'Mbora',
+  'Utako',
+  'Kado',
+  'Dutse Alhaji',
+  'Kubwa',
+  'Lugbe',
+  'Pyakasa',
+  'Airport Road',
+  'Karu',
+  'Nyanya',
+  'Kurudu',
+  'Orozo',
+  'Karshi',
+  'Idu',
+  'Dei-Dei',
+  'Zuba',
+  'Bwari',
+  'Gwagwalada',
 ];
 
 List<String> _filterLocations(Iterable<String> locations, String query) {
@@ -342,73 +374,78 @@ class _LocationGroupLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Text(
-          label.toUpperCase(),
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.1,
-            color: _locationMuted,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Text(
+      label.toUpperCase(),
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.1,
+        color: _locationMuted,
+      ),
+    ),
+  );
 }
 
 class _LocationChipWrap extends StatelessWidget {
-  const _LocationChipWrap({
-    required this.locations,
-    required this.onSelected,
-  });
+  const _LocationChipWrap({required this.locations, required this.onSelected});
 
   final List<String> locations;
   final ValueChanged<String> onSelected;
 
   @override
-  Widget build(BuildContext context) => Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        children: [
-          for (final location in locations)
-            Semantics(
-              button: true,
-              label: 'Search properties in $location',
-              child: Material(
-                color: Colors.white,
-                shape: const StadiumBorder(
-                  side: BorderSide(color: _locationBorder),
-                ),
-                child: InkWell(
-                  customBorder: const StadiumBorder(),
-                  onTap: () => onSelected(location),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 16,
-                          color: _locationGold,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
+  Widget build(BuildContext context) {
+    final horizontalPadding = MediaQuery.sizeOf(context).width < 340
+        ? 7.0
+        : 14.0;
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        for (final location in locations)
+          Semantics(
+            button: true,
+            label: 'Search properties in $location',
+            child: Material(
+              color: Colors.white,
+              shape: const StadiumBorder(
+                side: BorderSide(color: _locationBorder),
+              ),
+              child: InkWell(
+                customBorder: const StadiumBorder(),
+                onTap: () => onSelected(location),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                  ).copyWith(left: horizontalPadding, right: horizontalPadding),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 16,
+                        color: _locationGold,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
                           location,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: _locationNavy,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-        ],
-      );
+          ),
+      ],
+    );
+  }
 }
