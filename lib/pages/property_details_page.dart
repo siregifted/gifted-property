@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/property.dart';
+import '../widgets/property_location_map.dart';
 import 'enquiry_page.dart';
 import 'inspection_page.dart';
 
@@ -167,6 +168,14 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
                         );
                       }),
 
+                      const SizedBox(height: 30),
+
+                      const Text(
+                        'Location & directions',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0B1F33)),
+                      ),
+                      const SizedBox(height: 15),
+                      PropertyLocationMap(property: property),
                       const SizedBox(height: 30),
 
                       LayoutBuilder(
