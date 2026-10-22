@@ -27,6 +27,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final property = widget.property;
+    final compact = MediaQuery.sizeOf(context).width < 600;
 
     return Scaffold(
       appBar: AppBar(
@@ -47,14 +48,14 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
                 _buildGallery(property),
 
                 Padding(
-                  padding: const EdgeInsets.all(40),
+                  padding: EdgeInsets.all(compact ? 20 : 40),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         property.title,
-                        style: const TextStyle(
-                          fontSize: 36,
+                        style: TextStyle(
+                          fontSize: compact ? 28 : 36,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF0B1F33),
                         ),
@@ -168,51 +169,62 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
 
                       const SizedBox(height: 30),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        InspectionPage(property: property),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF0B1F33),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 18,
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isCompact = constraints.maxWidth < 600;
+                          final inspectionButton = ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      InspectionPage(property: property),
                                 ),
-                              ),
-                              child: const Text('Schedule Inspection'),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0B1F33),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
                             ),
-                          ),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        EnquiryPage(property: property),
-                                  ),
-                                );
-                              },
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF0B1F33),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 18,
+                            child: const Text('Schedule Inspection'),
+                          );
+                          final enquiryButton = OutlinedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      EnquiryPage(property: property),
                                 ),
-                              ),
-                              child: const Text('Contact Agent'),
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF0B1F33),
+                              padding: const EdgeInsets.symmetric(vertical: 18),
                             ),
-                          ),
-                        ],
+                            child: const Text('Contact Agent'),
+                          );
+
+                          if (isCompact) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                inspectionButton,
+                                const SizedBox(height: 12),
+                                enquiryButton,
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            children: [
+                              Expanded(child: inspectionButton),
+                              const SizedBox(width: 15),
+                              Expanded(child: enquiryButton),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -226,10 +238,12 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
   }
 
   Widget _buildGallery(Property property) {
+    final imageHeight = MediaQuery.sizeOf(context).width < 600 ? 260.0 : 500.0;
+
     if (property.imageUrls.isEmpty) {
       return Container(
         width: double.infinity,
-        height: 500,
+        height: imageHeight,
         color: const Color(0xFFE8EEF3),
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -263,7 +277,7 @@ class _PropertyDetailsPageState extends State<PropertyDetailsPage> {
           children: [
             SizedBox(
               width: double.infinity,
-              height: 500,
+              height: imageHeight,
               child: Image.network(
                 property.imageUrls[selectedImageIndex],
                 fit: BoxFit.cover,

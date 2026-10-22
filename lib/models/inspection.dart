@@ -1,4 +1,5 @@
 class Inspection {
+  final int? propertyId;
   final String propertyTitle;
   final String propertyLocation;
   final String name;
@@ -7,9 +8,9 @@ class Inspection {
   final DateTime inspectionDate;
   final String preferredTime;
   final String message;
-  final DateTime createdAt;
 
   const Inspection({
+    this.propertyId,
     required this.propertyTitle,
     required this.propertyLocation,
     required this.name,
@@ -18,6 +19,5 @@ class Inspection {
     required this.inspectionDate,
     required this.preferredTime,
     required this.message,
-    required this.createdAt,
   });
 }

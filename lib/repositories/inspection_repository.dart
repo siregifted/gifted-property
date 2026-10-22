@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/inspection.dart';
 
 class InspectionRepository {
@@ -5,13 +7,23 @@ class InspectionRepository {
 
   static final InspectionRepository instance = InspectionRepository._();
 
-  final List<Inspection> _inspections = [];
+  Future<void> addInspection(Inspection inspection) async {
+    final date = inspection.inspectionDate;
+    final formattedDate =
+        '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
 
-  List<Inspection> getInspections() {
-    return List.unmodifiable(_inspections);
-  }
-
-  void addInspection(Inspection inspection) {
-    _inspections.add(inspection);
+    await Supabase.instance.client.from('Inspections').insert({
+      'property_id': inspection.propertyId,
+      'property_title': inspection.propertyTitle,
+      'property_location': inspection.propertyLocation,
+      'name': inspection.name,
+      'phone': inspection.phone,
+      'email': inspection.email,
+      'inspection_date': formattedDate,
+      'preferred_time': inspection.preferredTime,
+      'message': inspection.message,
+    });
   }
 }

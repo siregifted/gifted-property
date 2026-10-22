@@ -5,7 +5,9 @@ import '../repositories/property_repository.dart';
 import '../widgets/property_card.dart';
 
 class PropertiesPage extends StatefulWidget {
-  const PropertiesPage({super.key});
+  final String initialSearchQuery;
+
+  const PropertiesPage({super.key, this.initialSearchQuery = ''});
 
   @override
   State<PropertiesPage> createState() => _PropertiesPageState();
@@ -13,8 +15,21 @@ class PropertiesPage extends StatefulWidget {
 
 class _PropertiesPageState extends State<PropertiesPage> {
   final PropertyRepository _propertyRepository = const PropertyRepository();
+  late final TextEditingController _searchController;
+  late String _searchQuery;
 
-  String _searchQuery = '';
+  @override
+  void initState() {
+    super.initState();
+    _searchQuery = widget.initialSearchQuery;
+    _searchController = TextEditingController(text: _searchQuery);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   List<Property> get _filteredProperties {
     final query = _searchQuery.trim().toLowerCase();
@@ -34,6 +49,7 @@ class _PropertiesPageState extends State<PropertiesPage> {
   @override
   Widget build(BuildContext context) {
     final filteredProperties = _filteredProperties;
+    final compact = MediaQuery.sizeOf(context).width < 600;
 
     return Scaffold(
       appBar: AppBar(
@@ -45,19 +61,22 @@ class _PropertiesPageState extends State<PropertiesPage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(40),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 20 : 40,
+          vertical: compact ? 28 : 40,
+        ),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Our Properties',
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: compact ? 28 : 32,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0B1F33),
+                    color: const Color(0xFF0B1F33),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -65,8 +84,10 @@ class _PropertiesPageState extends State<PropertiesPage> {
                   'Explore premium properties available through Gifted Property.',
                   style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 24),
                 TextField(
+                  controller: _searchController,
+                  textInputAction: TextInputAction.search,
                   onChanged: (value) {
                     setState(() {
                       _searchQuery = value;
@@ -78,7 +99,9 @@ class _PropertiesPageState extends State<PropertiesPage> {
                     suffixIcon: _searchQuery.isEmpty
                         ? null
                         : IconButton(
+                            tooltip: 'Clear search',
                             onPressed: () {
+                              _searchController.clear();
                               setState(() {
                                 _searchQuery = '';
                               });
@@ -90,13 +113,14 @@ class _PropertiesPageState extends State<PropertiesPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 25),
+                const SizedBox(height: 24),
                 if (filteredProperties.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 50),
                     child: Center(
                       child: Text(
-                        'No properties found.',
+                        'No properties found. Try another location or property type.',
+                        textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 18, color: Colors.black54),
                       ),
                     ),

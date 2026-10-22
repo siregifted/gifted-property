@@ -26,9 +26,7 @@ class GiftedPropertyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         fontFamily: 'Arial',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0B1F33),
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0B1F33)),
       ),
       home: const HomePage(),
     );

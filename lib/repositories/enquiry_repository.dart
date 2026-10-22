@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/enquiry.dart';
 
 class EnquiryRepository {
@@ -5,13 +7,15 @@ class EnquiryRepository {
 
   static final EnquiryRepository instance = EnquiryRepository._();
 
-  final List<Enquiry> _enquiries = [];
-
-  List<Enquiry> getEnquiries() {
-    return List.unmodifiable(_enquiries);
-  }
-
-  void addEnquiry(Enquiry enquiry) {
-    _enquiries.add(enquiry);
+  Future<void> addEnquiry(Enquiry enquiry) async {
+    await Supabase.instance.client.from('Enquiries').insert({
+      'property_id': enquiry.propertyId,
+      'property_title': enquiry.propertyTitle,
+      'property_location': enquiry.propertyLocation,
+      'name': enquiry.name,
+      'phone': enquiry.phone,
+      'email': enquiry.email,
+      'message': enquiry.message,
+    });
   }
 }
