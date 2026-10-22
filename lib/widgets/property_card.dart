@@ -33,15 +33,35 @@ class PropertyCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
+            SizedBox(
               height: 180,
               width: double.infinity,
-              color: const Color(0xFFE8EEF3),
-              child: const Icon(
-                Icons.home_work,
-                size: 70,
-                color: Color(0xFF0B1F33),
-              ),
+              child: property.imageUrls.isEmpty
+                  ? const ColoredBox(
+                      color: Color(0xFFE8EEF3),
+                      child: Center(
+                        child: Icon(
+                          Icons.home_work,
+                          size: 70,
+                          color: Color(0xFF0B1F33),
+                        ),
+                      ),
+                    )
+                  : Image.network(
+                      property.imageUrls.first,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const ColoredBox(
+                        color: Color(0xFFE8EEF3),
+                        child: Center(
+                          child: Icon(
+                            Icons.broken_image_outlined,
+                            size: 70,
+                            color: Color(0xFF0B1F33),
+                          ),
+                        ),
+                      ),
+                    ),
             ),
             Padding(
               padding: const EdgeInsets.all(18),
