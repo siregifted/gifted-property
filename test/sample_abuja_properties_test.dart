@@ -45,4 +45,19 @@ void main() {
     // ignore: deprecated_member_use
     expect(legacy.properties, isEmpty);
   });
+
+  test('Supabase is skipped only for an explicitly requested debug demo', () {
+    expect(
+      shouldInitializeSupabase(isDebugMode: true, sampleDataRequested: true),
+      isFalse,
+    );
+    expect(
+      shouldInitializeSupabase(isDebugMode: true, sampleDataRequested: false),
+      isTrue,
+    );
+    expect(
+      shouldInitializeSupabase(isDebugMode: false, sampleDataRequested: true),
+      isTrue,
+    );
+  });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'config/sample_data_config.dart';
 import 'config/supabase_config.dart';
 import 'models/property.dart';
 import 'pages/home_page.dart';
@@ -10,13 +11,15 @@ Future<void> main() async {
 
   Object? startupError;
   try {
-    if (!SupabaseConfig.isConfigured) {
-      throw StateError('Supabase client configuration is missing or unsafe.');
+    if (!sampleDataEnabled) {
+      if (!SupabaseConfig.isConfigured) {
+        throw StateError('Supabase client configuration is missing or unsafe.');
+      }
+      await Supabase.initialize(
+        url: SupabaseConfig.url,
+        publishableKey: SupabaseConfig.publishableKey,
+      );
     }
-    await Supabase.initialize(
-      url: SupabaseConfig.url,
-      publishableKey: SupabaseConfig.publishableKey,
-    );
   } catch (error) {
     startupError = error;
   }

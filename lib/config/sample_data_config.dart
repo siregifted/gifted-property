@@ -11,3 +11,11 @@ bool shouldEnableSampleData({
   required bool isDebugMode,
   required bool requested,
 }) => isDebugMode && requested;
+
+bool shouldInitializeSupabase({
+  required bool isDebugMode,
+  required bool sampleDataRequested,
+}) => !shouldEnableSampleData(
+  isDebugMode: isDebugMode,
+  requested: sampleDataRequested,
+);

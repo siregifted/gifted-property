@@ -14,6 +14,7 @@
 - Added typed, HTTPS-only approved property media; cover ordering, video link handling, and an eight-item gallery cap.
 - Added bounded public listing/media reads (100 listing rows, up to 800 media rows/100 listings), positive persisted-ID requirements, and disabled lead actions for sample/invalid records.
 - Made development demo records debug-only, conspicuously fictional, and unavailable in profile/release builds; retired the duplicate ungated fixture list.
+- Made the explicit debug demo mode skip Supabase initialization so the fictional preview runs offline without credentials; normal/profile/release modes still initialize and require the configured backend.
 - Added shared lead validation, Abuja/Lagos date rules, clearer submission feedback and injectable deterministic form tests.
 - Prepared a Supabase migration for separate public area labels, filtered catalog/media views, location masking, lead-to-published-property binding, field checks and conservative ACLs. It aborts for existing catalog view names and unexpected permissive public lead-write policies.
 - Added blank real-property/media intake templates, an intake checklist, setup/release documentation and pinned GitHub Actions CI.
@@ -24,8 +25,9 @@
 - `flutter pub get` — passed.
 - `dart format lib test` — passed; no pending formatting changes.
 - `flutter analyze --fatal-infos` — passed with no issues.
-- `flutter test` — passed (29 tests).
-- `flutter test --dart-define=USE_SAMPLE_PROPERTIES=true` — passed (29 tests).
+- `flutter test` — passed (30 tests).
+- `flutter test --dart-define=USE_SAMPLE_PROPERTIES=true` — passed (30 tests).
+- `flutter build web --debug --dart-define=USE_SAMPLE_PROPERTIES=true` — passed and served as a credential-free local preview.
 - `flutter build web --release --dart-define=USE_SAMPLE_PROPERTIES=true` — passed. The release JavaScript was checked and does not contain the demo listing markers, even when the demo flag was requested.
 - Supabase migration parsed locally with `pglast` (34 statements); GitHub Actions YAML, Android manifest, iOS plist and web manifest parsed successfully. This is syntax/metadata validation only, not a database execution or hosted CI result.
 - `android/gradlew --version` — launched Gradle 9.3.1. The wrapper distribution checksum is pinned. No Android application compile or signed artifact was produced.

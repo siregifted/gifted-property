@@ -22,7 +22,7 @@ flutter run -d chrome \
   --dart-define=USE_SAMPLE_PROPERTIES=true
 ```
 
-The demo switch only works in Flutter **debug** mode, and is off by default. Profile and release builds cannot enable fictional records. Samples include fictional prices and approximate neighbourhood pins, have no property photos, and disable enquiry/inspection actions. Never upload or describe them as genuine properties.
+The demo switch only works in Flutter **debug** mode, and is off by default. Run `flutter run -d chrome --dart-define=USE_SAMPLE_PROPERTIES=true` to preview the app offline; this explicit debug-demo mode skips Supabase initialization. Normal debug mode still requires a valid backend. Profile and release builds cannot enable fictional records and continue to require valid backend configuration. Samples include fictional prices and approximate neighbourhood pins, have no property photos, and disable enquiry/inspection actions. Never upload or describe them as genuine properties.
 
 A release web compile smoke-test is `flutter build web --release`; it compiles without proving a live backend connection. A usable release build must include the intended `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` defines. The app now fails closed with a configuration message when either is absent. Never place a Supabase service-role key or an `sb_secret_` key in a client build. `SupabaseConfig` rejects modern secret keys and legacy JWTs carrying a `service_role` claim.
 
