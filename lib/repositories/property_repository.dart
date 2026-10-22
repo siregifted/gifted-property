@@ -1,100 +1,120 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../config/sample_data_config.dart';
 import '../data/sample_abuja_properties.dart';
 import '../models/property.dart';
-
-/// Sample listings are opt-in for local/demo builds only.
-/// Enable with: flutter run -d web-server --web-hostname 0.0.0.0
-/// --web-port 8080 --dart-define=USE_SAMPLE_PROPERTIES=true
-const bool _useSampleProperties =
-    bool.fromEnvironment('USE_SAMPLE_PROPERTIES', defaultValue: false);
+import '../models/property_media.dart';
 
 class PropertyRepository {
   const PropertyRepository();
 
+  static const bool sampleListingsEnabled = sampleDataEnabled;
+  static const int maxCatalogRows = 100;
+  static const int maxMediaRowsPerFetch =
+      maxCatalogRows * Property.maxGalleryItems;
+
   SupabaseClient get _client => Supabase.instance.client;
 
   Future<List<Property>> getPublishedProperties() async {
-    if (_useSampleProperties) {
+    if (sampleListingsEnabled) {
       return List<Property>.unmodifiable(sampleAbujaProperties);
     }
 
     final rows = await _client
-        .from('Properties')
-        .select()
-        .eq('is_published', true)
-        .order('created_at', ascending: false);
+        .from('public_properties')
+        .select(
+          'id,created_at,title,description,price,property_type,location,'
+          'bedrooms,bathrooms,status,is_featured,address,latitude,longitude,'
+          'location_verification_status,nearby_landmarks,features',
+        )
+        .order('created_at', ascending: false)
+        .limit(maxCatalogRows);
     return _attachApprovedMedia(rows);
   }
 
   Future<List<Property>> getFeaturedProperties() async {
-    if (_useSampleProperties) {
+    if (sampleListingsEnabled) {
       return List<Property>.unmodifiable(
         sampleAbujaProperties.where((property) => property.isFeatured),
       );
     }
 
     final rows = await _client
-        .from('Properties')
-        .select()
-        .eq('is_published', true)
+        .from('public_properties')
+        .select(
+          'id,created_at,title,description,price,property_type,location,'
+          'bedrooms,bathrooms,status,is_featured,address,latitude,longitude,'
+          'location_verification_status,nearby_landmarks,features',
+        )
         .eq('is_featured', true)
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .limit(3);
     return _attachApprovedMedia(rows);
   }
 
   Future<List<Property>> _attachApprovedMedia(List<dynamic> rows) async {
     final properties = rows
         .map((row) => Property.fromMap(Map<String, dynamic>.from(row as Map)))
+        .where((property) => property.id != null && property.id! > 0)
         .toList();
-    final ids = properties.map((property) => property.id).whereType<int>().toList();
+    final ids = properties
+        .map((property) => property.id)
+        .whereType<int>()
+        .where((id) => id > 0)
+        .toList();
     if (ids.isEmpty) return properties;
 
     try {
       final mediaRows = await _client
-          .from('PropertyMedia')
-          .select('property_id, media_url, sort_order, is_approved')
+          .from('public_property_media')
+          .select(
+            'id,property_id,media_url,media_type,sort_order,is_cover,'
+            'is_approved,caption',
+          )
           .inFilter('property_id', ids)
-          .eq('is_approved', true)
-          .order('sort_order', ascending: true);
+          .order('is_cover', ascending: false)
+          .order('sort_order', ascending: true)
+          .order('id', ascending: true)
+          .limit(maxMediaRowsPerFetch);
 
-      final urlsByProperty = <int, List<String>>{};
+      final mediaByProperty = <int, List<PropertyMedia>>{};
       for (final row in mediaRows) {
         final item = Map<String, dynamic>.from(row as Map);
-        final propertyId = (item['property_id'] as num?)?.toInt();
-        final url = item['media_url']?.toString().trim() ?? '';
-        if (propertyId == null || url.isEmpty) continue;
-        urlsByProperty.putIfAbsent(propertyId, () => <String>[]).add(url);
+        try {
+          final media = PropertyMedia.fromMap(item);
+          if (!media.isApproved || media.propertyId == null) continue;
+          final propertyMedia = mediaByProperty.putIfAbsent(
+            media.propertyId!,
+            () => [],
+          );
+          if (propertyMedia.length < Property.maxGalleryItems) {
+            propertyMedia.add(media);
+          }
+        } on FormatException catch (error) {
+          debugPrint(
+            'Ignoring invalid property media record: ${error.message}',
+          );
+        }
       }
 
       return properties.map((property) {
-        final mediaUrls = property.id == null
-            ? null
-            : urlsByProperty[property.id!];
-        if (mediaUrls == null || mediaUrls.isEmpty) return property;
-        return Property(
-          id: property.id,
-          title: property.title,
-          location: property.location,
-          price: property.price,
-          bedrooms: property.bedrooms,
-          bathrooms: property.bathrooms,
-          propertyType: property.propertyType,
-          description: property.description,
-          imageUrls: mediaUrls,
-          features: property.features,
-          status: property.status,
-          isFeatured: property.isFeatured,
-          latitude: property.latitude,
-          longitude: property.longitude,
-          locationVerificationStatus: property.locationVerificationStatus,
-          nearbyLandmarks: property.nearbyLandmarks,
+        final media = mediaByProperty[property.id] ?? const <PropertyMedia>[];
+        return property.copyWith(
+          mediaItems: media,
+          imageUrls: media
+              .where((item) => item.isImage)
+              .map((item) => item.url)
+              .toList(growable: false),
         );
       }).toList();
-    } on PostgrestException {
-      // Keep the legacy image_url fallback if the optional media table has not
-      // been migrated yet. The migration is included in this feature branch.
-      return properties;
+    } on PostgrestException catch (error) {
+      if (error.code == 'PGRST205' || error.code == '42P01') {
+        // Keep published details readable during a staged rollout, but do not
+        // bypass the public view or fall back to an unrestricted table query.
+        return properties;
+      }
+      rethrow;
     }
   }
 }

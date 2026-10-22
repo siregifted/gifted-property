@@ -8,8 +8,13 @@ class EnquiryRepository {
   static final EnquiryRepository instance = EnquiryRepository._();
 
   Future<void> addEnquiry(Enquiry enquiry) async {
+    final propertyId = enquiry.propertyId;
+    if (propertyId == null || propertyId <= 0) {
+      throw StateError('A published property is required for an enquiry.');
+    }
+
     await Supabase.instance.client.from('Enquiries').insert({
-      'property_id': enquiry.propertyId,
+      'property_id': propertyId,
       'property_title': enquiry.propertyTitle,
       'property_location': enquiry.propertyLocation,
       'name': enquiry.name,

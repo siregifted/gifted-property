@@ -6,7 +6,10 @@ import '../widgets/property_card.dart';
 import 'properties_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final Future<List<Property>> Function()? featuredPropertyLoader;
+  final Future<List<Property>> Function()? propertyLoader;
+
+  const HomePage({super.key, this.featuredPropertyLoader, this.propertyLoader});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -15,26 +18,49 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   static const PropertyRepository _propertyRepository = PropertyRepository();
   final TextEditingController _searchController = TextEditingController();
-  late final Future<List<Property>> _featuredPropertiesFuture;
+  final ScrollController _pageScrollController = ScrollController();
+  late Future<List<Property>> _featuredPropertiesFuture;
 
   @override
   void initState() {
     super.initState();
-    _featuredPropertiesFuture = _propertyRepository.getFeaturedProperties();
+    _featuredPropertiesFuture = _loadFeaturedProperties();
+  }
+
+  Future<List<Property>> _loadFeaturedProperties() =>
+      widget.featuredPropertyLoader?.call() ??
+      _propertyRepository.getFeaturedProperties();
+
+  void _retryFeaturedProperties() {
+    setState(() {
+      _featuredPropertiesFuture = _loadFeaturedProperties();
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _pageScrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToTop() {
+    if (!_pageScrollController.hasClients) return;
+    _pageScrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOut,
+    );
   }
 
   void _openProperties({String initialSearchQuery = ''}) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            PropertiesPage(initialSearchQuery: initialSearchQuery),
+        builder: (context) => PropertiesPage(
+          initialSearchQuery: initialSearchQuery,
+          propertyLoader: widget.propertyLoader,
+        ),
       ),
     );
   }
@@ -60,9 +86,12 @@ class _HomePageState extends State<HomePage> {
                   onSelected: (value) {
                     if (value == 'properties') {
                       _openProperties();
+                    } else if (value == 'home') {
+                      _scrollToTop();
                     }
                   },
                   itemBuilder: (context) => const [
+                    PopupMenuItem(value: 'home', child: Text('Home')),
                     PopupMenuItem(
                       value: 'properties',
                       child: Text('Properties'),
@@ -72,7 +101,7 @@ class _HomePageState extends State<HomePage> {
               ]
             : [
                 TextButton(
-                  onPressed: () {},
+                  onPressed: _scrollToTop,
                   child: const Text(
                     'Home',
                     style: TextStyle(color: Colors.white),
@@ -89,6 +118,7 @@ class _HomePageState extends State<HomePage> {
               ],
       ),
       body: SingleChildScrollView(
+        controller: _pageScrollController,
         child: Column(
           children: [
             _buildHeroSection(),
@@ -224,9 +254,19 @@ class _HomePageState extends State<HomePage> {
                         );
                       }
                       if (snapshot.hasError) {
-                        return const Text(
-                          'Featured properties could not be loaded. Please try the Properties page again.',
-                          style: TextStyle(color: Colors.black54),
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Featured properties could not be loaded. Check your connection and try again.',
+                              style: TextStyle(color: Colors.black54),
+                            ),
+                            TextButton.icon(
+                              onPressed: _retryFeaturedProperties,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Try again'),
+                            ),
+                          ],
                         );
                       }
                       final properties = snapshot.data ?? [];
@@ -240,7 +280,11 @@ class _HomePageState extends State<HomePage> {
                       if (constraints.maxWidth < 700) {
                         return Column(
                           children: [
-                            for (var index = 0; index < visibleProperties.length; index++) ...[
+                            for (
+                              var index = 0;
+                              index < visibleProperties.length;
+                              index++
+                            ) ...[
                               PropertyCard(property: visibleProperties[index]),
                               if (index != visibleProperties.length - 1)
                                 const SizedBox(height: 20),
@@ -251,10 +295,16 @@ class _HomePageState extends State<HomePage> {
                       return Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          for (var index = 0; index < visibleProperties.length; index++) ...[
+                          for (
+                            var index = 0;
+                            index < visibleProperties.length;
+                            index++
+                          ) ...[
                             if (index > 0) const SizedBox(width: 20),
                             Expanded(
-                              child: PropertyCard(property: visibleProperties[index]),
+                              child: PropertyCard(
+                                property: visibleProperties[index],
+                              ),
                             ),
                           ],
                         ],

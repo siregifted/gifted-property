@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/property.dart';
+import '../models/property_media.dart';
 import '../pages/property_details_page.dart';
 
 class PropertyCard extends StatelessWidget {
@@ -18,6 +19,7 @@ class PropertyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final media = property.coverMedia;
     return Card(
       elevation: 3,
       clipBehavior: Clip.antiAlias,
@@ -36,32 +38,7 @@ class PropertyCard extends StatelessWidget {
             SizedBox(
               height: 180,
               width: double.infinity,
-              child: property.imageUrls.isEmpty
-                  ? const ColoredBox(
-                      color: Color(0xFFE8EEF3),
-                      child: Center(
-                        child: Icon(
-                          Icons.home_work,
-                          size: 70,
-                          color: Color(0xFF0B1F33),
-                        ),
-                      ),
-                    )
-                  : Image.network(
-                      property.imageUrls.first,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const ColoredBox(
-                        color: Color(0xFFE8EEF3),
-                        child: Center(
-                          child: Icon(
-                            Icons.broken_image_outlined,
-                            size: 70,
-                            color: Color(0xFF0B1F33),
-                          ),
-                        ),
-                      ),
-                    ),
+              child: _buildCover(media),
             ),
             Padding(
               padding: const EdgeInsets.all(18),
@@ -75,6 +52,16 @@ class PropertyCard extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  if (property.isSample) ...[
+                    const SizedBox(height: 6),
+                    const Text(
+                      'DEMO ONLY — fictional listing and price; not for sale',
+                      style: TextStyle(
+                        color: Color(0xFF8A5A00),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -136,6 +123,55 @@ class PropertyCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCover(PropertyMedia? media) {
+    if (media == null) {
+      return const ColoredBox(
+        color: Color(0xFFE8EEF3),
+        child: Center(
+          child: Icon(Icons.home_work, size: 70, color: Color(0xFF0B1F33)),
+        ),
+      );
+    }
+
+    if (media.isVideo) {
+      return const ColoredBox(
+        color: Color(0xFF102A43),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.play_circle_outline, size: 64, color: Colors.white),
+              SizedBox(height: 8),
+              Text('Property video', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Image.network(
+      media.url,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return const ColoredBox(
+          color: Color(0xFFE8EEF3),
+          child: Center(child: CircularProgressIndicator()),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) => const ColoredBox(
+        color: Color(0xFFE8EEF3),
+        child: Center(
+          child: Icon(
+            Icons.broken_image_outlined,
+            size: 70,
+            color: Color(0xFF0B1F33),
+          ),
         ),
       ),
     );

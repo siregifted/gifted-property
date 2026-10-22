@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/inspection.dart';
 import '../models/property.dart';
 import '../repositories/inspection_repository.dart';
+import '../validation/lead_validators.dart';
 
 class InspectionPage extends StatefulWidget {
   final Property property;
+  final Future<void> Function(Inspection)? onSubmit;
 
-  const InspectionPage({super.key, required this.property});
+  const InspectionPage({super.key, required this.property, this.onSubmit});
 
   @override
   State<InspectionPage> createState() => _InspectionPageState();
@@ -26,6 +29,11 @@ class _InspectionPageState extends State<InspectionPage> {
   TimeOfDay? _preferredTime;
   bool _isSubmitting = false;
 
+  bool get _canSubmit =>
+      !widget.property.isSample &&
+      widget.property.id != null &&
+      widget.property.id! > 0;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -36,15 +44,21 @@ class _InspectionPageState extends State<InspectionPage> {
   }
 
   Future<void> _selectDate() async {
-    if (_isSubmitting) return;
+    if (_isSubmitting || !_canSubmit) return;
 
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = lagosCalendarDate(DateTime.now().toUtc());
+    final latestDate = addOneCalendarYearClamped(today);
+    final currentSelection = _inspectionDate;
+    final initialDate =
+        currentSelection != null &&
+            isAllowedInspectionDate(currentSelection, DateTime.now().toUtc())
+        ? currentSelection
+        : today;
     final selectedDate = await showDatePicker(
       context: context,
       firstDate: today,
-      lastDate: DateTime(now.year + 1, now.month, now.day),
-      initialDate: _inspectionDate ?? today,
+      lastDate: latestDate,
+      initialDate: initialDate,
     );
 
     if (selectedDate != null && mounted) {
@@ -53,11 +67,12 @@ class _InspectionPageState extends State<InspectionPage> {
   }
 
   Future<void> _selectTime() async {
-    if (_isSubmitting) return;
+    if (_isSubmitting || !_canSubmit) return;
 
     final selectedTime = await showTimePicker(
       context: context,
-      initialTime: _preferredTime ?? TimeOfDay.now(),
+      initialTime: _preferredTime ?? const TimeOfDay(hour: 9, minute: 0),
+      helpText: 'Choose a preferred time in Abuja (WAT)',
     );
 
     if (selectedTime != null && mounted) {
@@ -66,35 +81,50 @@ class _InspectionPageState extends State<InspectionPage> {
   }
 
   Future<void> _submitInspection() async {
-    if (_isSubmitting || !_formKey.currentState!.validate()) {
+    if (!_canSubmit || _isSubmitting || !_formKey.currentState!.validate()) {
       return;
     }
 
-    if (_inspectionDate == null || _preferredTime == null) {
+    final nowUtc = DateTime.now().toUtc();
+    final inspectionDate = _inspectionDate;
+    if (inspectionDate == null ||
+        !isAllowedInspectionDate(inspectionDate, nowUtc)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select an inspection date and preferred time.'),
+          content: Text(
+            'Select a date from today through one year ahead (Abuja time).',
+          ),
         ),
+      );
+      return;
+    }
+    final preferredTime = _preferredTime;
+    if (preferredTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a preferred time.')),
       );
       return;
     }
 
     setState(() => _isSubmitting = true);
-    try {
-      await _inspectionRepository.addInspection(
-        Inspection(
-          propertyId: widget.property.id,
-          propertyTitle: widget.property.title,
-          propertyLocation: widget.property.location,
-          name: _nameController.text.trim(),
-          phone: _phoneController.text.trim(),
-          email: _emailController.text.trim(),
-          inspectionDate: _inspectionDate!,
-          preferredTime: _preferredTime!.format(context),
-          message: _messageController.text.trim(),
-        ),
-      );
+    final inspection = Inspection(
+      propertyId: widget.property.id,
+      propertyTitle: widget.property.title,
+      propertyLocation: widget.property.location,
+      name: _nameController.text.trim(),
+      phone: _phoneController.text.trim(),
+      email: _emailController.text.trim(),
+      inspectionDate: inspectionDate,
+      preferredTime: formatInspectionTime(
+        preferredTime.hour,
+        preferredTime.minute,
+      ),
+      message: _messageController.text.trim(),
+    );
 
+    try {
+      final submit = widget.onSubmit ?? _inspectionRepository.addInspection;
+      await submit(inspection);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -102,54 +132,21 @@ class _InspectionPageState extends State<InspectionPage> {
         ),
       );
       Navigator.pop(context);
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'We could not send your request. Check your connection and try again.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_submissionError(error))));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
-  String? _requiredField(String? value, String fieldName) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Please enter your $fieldName.';
+  String _submissionError(Object error) {
+    if (error is PostgrestException &&
+        (error.code == '42501' || error.code == '23514')) {
+      return 'This listing may no longer be accepting requests. Refresh the catalogue and try again.';
     }
-    if (fieldName == 'full name' && value.trim().length < 2) {
-      return 'Please enter your full name.';
-    }
-    if (fieldName == 'full name' && value.trim().length > 120) {
-      return 'Please keep your name under 120 characters.';
-    }
-    if (fieldName == 'message' && value.trim().length > 4000) {
-      return 'Please keep your message under 4000 characters.';
-    }
-    return null;
-  }
-
-  String? _validatePhone(String? value) {
-    final phone = value?.trim() ?? '';
-    final digits = phone.replaceAll(RegExp(r'\D'), '');
-    if (phone.length > 32 || digits.length < 7 || digits.length > 20) {
-      return 'Please enter a valid phone number.';
-    }
-    return null;
-  }
-
-  String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Please enter your email.';
-    }
-    if (value.trim().length > 254 ||
-        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim())) {
-      return 'Please enter a valid email.';
-    }
-    return null;
+    return 'We could not send your request. Check your connection and try again.';
   }
 
   String _formatDate(DateTime date) => '${date.day}/${date.month}/${date.year}';
@@ -198,49 +195,56 @@ class _InspectionPageState extends State<InspectionPage> {
                     widget.property.location,
                     style: const TextStyle(color: Colors.black54),
                   ),
+                  if (!_canSubmit) ...[
+                    const SizedBox(height: 16),
+                    _requestUnavailableNotice(widget.property.isSample),
+                  ],
                   const SizedBox(height: 24),
                   TextFormField(
                     controller: _nameController,
                     textCapitalization: TextCapitalization.words,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.name],
+                    maxLength: 120,
                     decoration: const InputDecoration(
                       labelText: 'Full Name',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (value) => _requiredField(value, 'full name'),
+                    validator: validateLeadName,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.telephoneNumber],
+                    maxLength: 32,
                     decoration: const InputDecoration(
                       labelText: 'Phone Number',
                       border: OutlineInputBorder(),
                     ),
-                    validator: _validatePhone,
+                    validator: validateLeadPhone,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.email],
+                    maxLength: 254,
                     decoration: const InputDecoration(
                       labelText: 'Email Address',
                       border: OutlineInputBorder(),
                     ),
-                    validator: _validateEmail,
+                    validator: validateLeadEmail,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   InkWell(
                     onTap: _selectDate,
                     borderRadius: BorderRadius.circular(4),
                     child: InputDecorator(
                       decoration: const InputDecoration(
-                        labelText: 'Inspection Date',
+                        labelText: 'Inspection Date (Abuja time)',
                         border: OutlineInputBorder(),
                         suffixIcon: Icon(Icons.calendar_today_outlined),
                       ),
@@ -257,7 +261,8 @@ class _InspectionPageState extends State<InspectionPage> {
                     borderRadius: BorderRadius.circular(4),
                     child: InputDecorator(
                       decoration: const InputDecoration(
-                        labelText: 'Preferred Time',
+                        labelText: 'Preferred Time (Abuja / WAT)',
+                        helperText: 'Recorded in West Africa Time (UTC+1).',
                         border: OutlineInputBorder(),
                         suffixIcon: Icon(Icons.access_time_outlined),
                       ),
@@ -274,19 +279,22 @@ class _InspectionPageState extends State<InspectionPage> {
                     textCapitalization: TextCapitalization.sentences,
                     minLines: 4,
                     maxLines: 6,
+                    maxLength: 4000,
                     decoration: const InputDecoration(
                       labelText: 'Message',
                       hintText: 'Add any additional information.',
                       alignLabelWithHint: true,
                       border: OutlineInputBorder(),
                     ),
-                    validator: (value) => _requiredField(value, 'message'),
+                    validator: validateLeadMessage,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isSubmitting ? null : _submitInspection,
+                      onPressed: _isSubmitting || !_canSubmit
+                          ? null
+                          : _submitInspection,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0B1F33),
                         foregroundColor: Colors.white,
@@ -318,4 +326,21 @@ class _InspectionPageState extends State<InspectionPage> {
       ),
     );
   }
+}
+
+Widget _requestUnavailableNotice(bool isSample) {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFF6E5),
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: Text(
+      isSample
+          ? 'Demo listings cannot schedule inspections.'
+          : 'This listing is not ready to accept inspection requests yet.',
+      style: const TextStyle(color: Color(0xFF704E00)),
+    ),
+  );
 }

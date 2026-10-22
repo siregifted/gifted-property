@@ -6,8 +6,13 @@ import '../widgets/property_card.dart';
 
 class PropertiesPage extends StatefulWidget {
   final String initialSearchQuery;
+  final Future<List<Property>> Function()? propertyLoader;
 
-  const PropertiesPage({super.key, this.initialSearchQuery = ''});
+  const PropertiesPage({
+    super.key,
+    this.initialSearchQuery = '',
+    this.propertyLoader,
+  });
 
   @override
   State<PropertiesPage> createState() => _PropertiesPageState();
@@ -24,8 +29,12 @@ class _PropertiesPageState extends State<PropertiesPage> {
     super.initState();
     _searchQuery = widget.initialSearchQuery;
     _searchController = TextEditingController(text: _searchQuery);
-    _propertiesFuture = _propertyRepository.getPublishedProperties();
+    _propertiesFuture = _loadProperties();
   }
+
+  Future<List<Property>> _loadProperties() =>
+      widget.propertyLoader?.call() ??
+      _propertyRepository.getPublishedProperties();
 
   @override
   void dispose() {
@@ -35,7 +44,7 @@ class _PropertiesPageState extends State<PropertiesPage> {
 
   void _retryLoad() {
     setState(() {
-      _propertiesFuture = _propertyRepository.getPublishedProperties();
+      _propertiesFuture = _loadProperties();
     });
   }
 
@@ -57,8 +66,10 @@ class _PropertiesPageState extends State<PropertiesPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0B1F33),
         foregroundColor: Colors.white,
-        title: const Text('Properties',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Properties',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(
@@ -71,12 +82,14 @@ class _PropertiesPageState extends State<PropertiesPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Our Properties',
-                    style: TextStyle(
-                      fontSize: compact ? 28 : 32,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF0B1F33),
-                    )),
+                Text(
+                  'Our Properties',
+                  style: TextStyle(
+                    fontSize: compact ? 28 : 32,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0B1F33),
+                  ),
+                ),
                 const SizedBox(height: 10),
                 const Text(
                   'Explore published properties available through Gifted Property.',
@@ -151,11 +164,11 @@ class _PropertiesPageState extends State<PropertiesPage> {
                           itemCount: properties.length,
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 20,
-                            mainAxisSpacing: 20,
-                            mainAxisExtent: 520,
-                          ),
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 20,
+                                mainAxisSpacing: 20,
+                                mainAxisExtent: 520,
+                              ),
                           itemBuilder: (context, index) =>
                               PropertyCard(property: properties[index]),
                         );
@@ -177,13 +190,12 @@ class _PropertiesPageState extends State<PropertiesPage> {
       child: Center(
         child: Column(
           children: [
-            Text(message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 17, color: Colors.black54)),
-            if (action != null) ...[
-              const SizedBox(height: 12),
-              action,
-            ],
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 17, color: Colors.black54),
+            ),
+            if (action != null) ...[const SizedBox(height: 12), action],
           ],
         ),
       ),

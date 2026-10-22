@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/enquiry.dart';
 import '../models/property.dart';
 import '../repositories/enquiry_repository.dart';
+import '../validation/lead_validators.dart';
 
 class EnquiryPage extends StatefulWidget {
   final Property property;
+  final Future<void> Function(Enquiry)? onSubmit;
 
-  const EnquiryPage({super.key, required this.property});
+  const EnquiryPage({super.key, required this.property, this.onSubmit});
 
   @override
   State<EnquiryPage> createState() => _EnquiryPageState();
@@ -22,6 +25,11 @@ class _EnquiryPageState extends State<EnquiryPage> {
   final EnquiryRepository _enquiryRepository = EnquiryRepository.instance;
   bool _isSubmitting = false;
 
+  bool get _canSubmit =>
+      !widget.property.isSample &&
+      widget.property.id != null &&
+      widget.property.id! > 0;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -32,77 +40,44 @@ class _EnquiryPageState extends State<EnquiryPage> {
   }
 
   Future<void> _submitEnquiry() async {
-    if (_isSubmitting || !_formKey.currentState!.validate()) {
+    if (!_canSubmit || _isSubmitting || !_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() => _isSubmitting = true);
-    try {
-      await _enquiryRepository.addEnquiry(
-        Enquiry(
-          propertyId: widget.property.id,
-          propertyTitle: widget.property.title,
-          propertyLocation: widget.property.location,
-          name: _nameController.text.trim(),
-          phone: _phoneController.text.trim(),
-          email: _emailController.text.trim(),
-          message: _messageController.text.trim(),
-        ),
-      );
+    final enquiry = Enquiry(
+      propertyId: widget.property.id,
+      propertyTitle: widget.property.title,
+      propertyLocation: widget.property.location,
+      name: _nameController.text.trim(),
+      phone: _phoneController.text.trim(),
+      email: _emailController.text.trim(),
+      message: _messageController.text.trim(),
+    );
 
+    try {
+      final submit = widget.onSubmit ?? _enquiryRepository.addEnquiry;
+      await submit(enquiry);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Your enquiry has been submitted.')),
       );
       Navigator.pop(context);
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'We could not send your enquiry. Check your connection and try again.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_submissionError(error))));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
-  String? _requiredField(String? value, String fieldName) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Please enter your $fieldName.';
+  String _submissionError(Object error) {
+    if (error is PostgrestException &&
+        (error.code == '42501' || error.code == '23514')) {
+      return 'This listing may no longer be accepting enquiries. Refresh the catalogue and try again.';
     }
-    if (fieldName == 'full name' && value.trim().length < 2) {
-      return 'Please enter your full name.';
-    }
-    if (fieldName == 'full name' && value.trim().length > 120) {
-      return 'Please keep your name under 120 characters.';
-    }
-    if (fieldName == 'message' && value.trim().length > 4000) {
-      return 'Please keep your message under 4000 characters.';
-    }
-    return null;
-  }
-
-  String? _validatePhone(String? value) {
-    final phone = value?.trim() ?? '';
-    final digits = phone.replaceAll(RegExp(r'\D'), '');
-    if (phone.length > 32 || digits.length < 7 || digits.length > 20) {
-      return 'Please enter a valid phone number.';
-    }
-    return null;
-  }
-
-  String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Please enter your email.';
-    }
-    if (value.trim().length > 254 ||
-        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim())) {
-      return 'Please enter a valid email.';
-    }
-    return null;
+    return 'We could not send your enquiry. Check your connection and try again.';
   }
 
   @override
@@ -144,61 +119,71 @@ class _EnquiryPageState extends State<EnquiryPage> {
                     widget.property.title,
                     style: const TextStyle(fontSize: 18, color: Colors.black54),
                   ),
+                  if (!_canSubmit) ...[
+                    const SizedBox(height: 16),
+                    _requestUnavailableNotice(widget.property.isSample),
+                  ],
                   const SizedBox(height: 24),
                   TextFormField(
                     controller: _nameController,
                     textCapitalization: TextCapitalization.words,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.name],
+                    maxLength: 120,
                     decoration: const InputDecoration(
                       labelText: 'Full Name',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (value) => _requiredField(value, 'full name'),
+                    validator: validateLeadName,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.telephoneNumber],
+                    maxLength: 32,
                     decoration: const InputDecoration(
                       labelText: 'Phone Number',
                       border: OutlineInputBorder(),
                     ),
-                    validator: _validatePhone,
+                    validator: validateLeadPhone,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.email],
+                    maxLength: 254,
                     decoration: const InputDecoration(
                       labelText: 'Email Address',
                       border: OutlineInputBorder(),
                     ),
-                    validator: _validateEmail,
+                    validator: validateLeadEmail,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   TextFormField(
                     controller: _messageController,
                     textCapitalization: TextCapitalization.sentences,
                     minLines: 4,
                     maxLines: 6,
+                    maxLength: 4000,
                     decoration: const InputDecoration(
                       labelText: 'Message',
                       hintText: 'Tell us how we can help you.',
                       alignLabelWithHint: true,
                       border: OutlineInputBorder(),
                     ),
-                    validator: (value) => _requiredField(value, 'message'),
+                    validator: validateLeadMessage,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isSubmitting ? null : _submitEnquiry,
+                      onPressed: _isSubmitting || !_canSubmit
+                          ? null
+                          : _submitEnquiry,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0B1F33),
                         foregroundColor: Colors.white,
@@ -230,4 +215,21 @@ class _EnquiryPageState extends State<EnquiryPage> {
       ),
     );
   }
+}
+
+Widget _requestUnavailableNotice(bool isSample) {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFF6E5),
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: Text(
+      isSample
+          ? 'Demo listings cannot send enquiries.'
+          : 'This listing is not ready to accept enquiries yet.',
+      style: const TextStyle(color: Color(0xFF704E00)),
+    ),
+  );
 }

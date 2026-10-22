@@ -10,15 +10,48 @@ class PropertyLocationMap extends StatelessWidget {
 
   const PropertyLocationMap({super.key, required this.property});
 
+  bool get _hasApproximatePin =>
+      property.locationVerificationStatus == 'approximate' &&
+      property.hasCoordinates;
+
+  bool get _canShowPin =>
+      property.isSample || property.hasVerifiedLocation || _hasApproximatePin;
+
+  String get _locationNotice {
+    if (property.isSample) {
+      return 'DEMO ONLY: fictional listing and approximate neighbourhood pin. '
+          'This is not a real property address and must not be used to arrange a viewing.';
+    }
+    if (property.hasVerifiedLocation) {
+      return 'Location marked verified. Confirm access details with Gifted Property before travelling.';
+    }
+    if (_hasApproximatePin) {
+      return 'Approximate neighbourhood location only — this pin is not an exact property address. '
+          'Confirm the location with our team before travelling.';
+    }
+    return 'The property location has not been verified. Map pins and directions are withheld '
+        'until the location is reviewed.';
+  }
+
   Future<void> _openDirections(BuildContext context) async {
+    if (!_canShowPin) return;
     final lat = property.latitude;
     final lng = property.longitude;
     if (lat == null || lng == null) return;
-    final uri = Uri.parse(
-      'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng',
-    );
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!opened && context.mounted) {
+
+    final uri = Uri.https('www.google.com', '/maps/dir/', {
+      'api': '1',
+      'destination': '$lat,$lng',
+    });
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open maps on this device.')),
+        );
+      }
+    } catch (_) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not open maps on this device.')),
       );
@@ -27,8 +60,7 @@ class PropertyLocationMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSample = property.title.startsWith('SAMPLE ONLY —');
-    if (!property.hasCoordinates) {
+    if (!property.hasCoordinates || !_canShowPin) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(24),
@@ -37,15 +69,23 @@ class PropertyLocationMap extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFE0E6EC)),
         ),
-        child: const Row(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.location_searching, color: Color(0xFF0B1F33), size: 28),
-            SizedBox(width: 12),
+            const Icon(
+              Icons.location_searching,
+              color: Color(0xFF0B1F33),
+              size: 28,
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'A map will appear when the property coordinates have been confirmed. We do not guess property locations.',
-                style: TextStyle(height: 1.45, color: Color(0xFF334155)),
+                property.locationVerificationStatus == 'verified' &&
+                        !property.hasCoordinates
+                    ? 'This listing is marked verified, but valid coordinates are missing. '
+                          'The map and directions are withheld until the data is corrected.'
+                    : _locationNotice,
+                style: const TextStyle(height: 1.45, color: Color(0xFF334155)),
               ),
             ),
           ],
@@ -54,6 +94,12 @@ class PropertyLocationMap extends StatelessWidget {
     }
 
     final point = LatLng(property.latitude!, property.longitude!);
+    final directionLabel = property.isSample
+        ? 'Open demo area in Maps'
+        : _hasApproximatePin
+        ? 'Open approximate area in Maps'
+        : 'Get directions';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -64,14 +110,14 @@ class PropertyLocationMap extends StatelessWidget {
             child: FlutterMap(
               options: MapOptions(
                 initialCenter: point,
-                initialZoom: 14,
+                initialZoom: _hasApproximatePin || property.isSample ? 12 : 14,
                 minZoom: 3,
                 maxZoom: 18,
               ),
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.giftedproperty.app',
+                  userAgentPackageName: 'com.siregifted.giftedproperty',
                 ),
                 MarkerLayer(
                   markers: [
@@ -79,9 +125,13 @@ class PropertyLocationMap extends StatelessWidget {
                       point: point,
                       width: 48,
                       height: 56,
-                      child: const Icon(
-                        Icons.location_on,
-                        color: Color(0xFF0B1F33),
+                      child: Icon(
+                        property.hasVerifiedLocation
+                            ? Icons.location_on
+                            : Icons.location_searching,
+                        color: property.hasVerifiedLocation
+                            ? const Color(0xFF0B1F33)
+                            : const Color(0xFF8A5A00),
                         size: 48,
                       ),
                     ),
@@ -107,25 +157,21 @@ class PropertyLocationMap extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(
-              property.hasVerifiedLocation ? Icons.verified : Icons.info_outline,
+              property.hasVerifiedLocation
+                  ? Icons.verified
+                  : Icons.info_outline,
               color: property.hasVerifiedLocation
                   ? const Color(0xFF16794B)
                   : const Color(0xFF8A5A00),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                isSample
-                    ? 'DEMO ONLY: this is an approximate neighbourhood test pin, not a real property address. Do not use it to arrange a viewing.'
-                    : property.hasVerifiedLocation
-                        ? 'Location verified by the Gifted Property team'
-                        : 'Approximate or unverified location — confirm with our team before travelling',
-                style: const TextStyle(height: 1.4),
-              ),
+              child: Text(_locationNotice, style: const TextStyle(height: 1.4)),
             ),
           ],
         ),
-        if (property.nearbyLandmarks.isNotEmpty) ...[
+        if (property.nearbyLandmarks.isNotEmpty &&
+            (property.hasVerifiedLocation || _hasApproximatePin)) ...[
           const SizedBox(height: 14),
           const Text(
             'Nearby landmarks',
@@ -139,10 +185,12 @@ class PropertyLocationMap extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: property.nearbyLandmarks
-                .map((landmark) => Chip(
-                      avatar: const Icon(Icons.place_outlined, size: 16),
-                      label: Text(landmark),
-                    ))
+                .map(
+                  (landmark) => Chip(
+                    avatar: const Icon(Icons.place_outlined, size: 16),
+                    label: Text(landmark),
+                  ),
+                )
                 .toList(),
           ),
         ],
@@ -152,7 +200,7 @@ class PropertyLocationMap extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: () => _openDirections(context),
             icon: const Icon(Icons.directions_outlined),
-            label: Text(isSample ? 'Test approximate area in Maps' : 'Get directions'),
+            label: Text(directionLabel),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF0B1F33),
               padding: const EdgeInsets.symmetric(vertical: 16),
