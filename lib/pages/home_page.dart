@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/property.dart';
 import '../repositories/property_repository.dart';
 import '../widgets/property_card.dart';
 import 'properties_page.dart';
@@ -14,6 +15,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   static const PropertyRepository _propertyRepository = PropertyRepository();
   final TextEditingController _searchController = TextEditingController();
+  late final Future<List<Property>> _featuredPropertiesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _featuredPropertiesFuture = _propertyRepository.getFeaturedProperties();
+  }
 
   @override
   void dispose() {
@@ -178,12 +186,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFeaturedSection() {
-    final properties = _propertyRepository.getProperties();
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 600;
-
         return Padding(
           padding: EdgeInsets.symmetric(
             horizontal: compact ? 20 : 40,
@@ -205,38 +210,51 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    'Explore selected properties available through Gifted Property.',
+                    'Explore selected published properties available through Gifted Property.',
                     style: TextStyle(fontSize: 16, color: Colors.black54),
                   ),
                   const SizedBox(height: 24),
-                  LayoutBuilder(
-                    builder: (context, cardConstraints) {
-                      if (cardConstraints.maxWidth < 700) {
+                  FutureBuilder(
+                    future: _featuredPropertiesFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                          padding: EdgeInsets.all(32),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return const Text(
+                          'Featured properties could not be loaded. Please try the Properties page again.',
+                          style: TextStyle(color: Colors.black54),
+                        );
+                      }
+                      final properties = snapshot.data ?? [];
+                      if (properties.isEmpty) {
+                        return const Text(
+                          'No featured properties are published yet.',
+                          style: TextStyle(color: Colors.black54),
+                        );
+                      }
+                      final visibleProperties = properties.take(3).toList();
+                      if (constraints.maxWidth < 700) {
                         return Column(
                           children: [
-                            for (
-                              var index = 0;
-                              index < properties.length;
-                              index++
-                            ) ...[
-                              PropertyCard(property: properties[index]),
-                              if (index != properties.length - 1)
+                            for (var index = 0; index < visibleProperties.length; index++) ...[
+                              PropertyCard(property: visibleProperties[index]),
+                              if (index != visibleProperties.length - 1)
                                 const SizedBox(height: 20),
                             ],
                           ],
                         );
                       }
-
                       return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          for (
-                            var index = 0;
-                            index < properties.length;
-                            index++
-                          ) ...[
-                            if (index != 0) const SizedBox(width: 20),
+                          for (var index = 0; index < visibleProperties.length; index++) ...[
+                            if (index > 0) const SizedBox(width: 20),
                             Expanded(
-                              child: PropertyCard(property: properties[index]),
+                              child: PropertyCard(property: visibleProperties[index]),
                             ),
                           ],
                         ],
