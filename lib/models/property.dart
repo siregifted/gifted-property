@@ -11,6 +11,10 @@ class Property {
   final List<String> features;
   final String status;
   final bool isFeatured;
+  final double? latitude;
+  final double? longitude;
+  final String locationVerificationStatus;
+  final List<String> nearbyLandmarks;
 
   const Property({
     this.id,
@@ -25,13 +29,29 @@ class Property {
     required this.features,
     required this.status,
     this.isFeatured = false,
+    this.latitude,
+    this.longitude,
+    this.locationVerificationStatus = 'unverified',
+    this.nearbyLandmarks = const [],
   });
+
+  bool get hasCoordinates => latitude != null &&
+      longitude != null &&
+      latitude! >= -90 &&
+      latitude! <= 90 &&
+      longitude! >= -180 &&
+      longitude! <= 180;
+
+  bool get hasVerifiedLocation =>
+      hasCoordinates && locationVerificationStatus == 'verified';
 
   factory Property.fromMap(Map<String, dynamic> map) {
     final imageUrl = map['image_url']?.toString().trim() ?? '';
     final priceValue = map['price'];
     final bedroomsValue = map['bedrooms'];
     final bathroomsValue = map['bathrooms'];
+    final rawFeatures = map['features'];
+    final rawLandmarks = map['nearby_landmarks'];
 
     return Property(
       id: (map['id'] as num?)?.toInt(),
@@ -49,9 +69,18 @@ class Property {
       propertyType: map['property_type']?.toString() ?? 'Property',
       description: map['description']?.toString() ?? '',
       imageUrls: imageUrl.isEmpty ? const [] : [imageUrl],
-      features: const [],
+      features: rawFeatures is List
+          ? rawFeatures.map((item) => item.toString()).toList()
+          : const [],
       status: map['status']?.toString() ?? 'Available',
       isFeatured: map['is_featured'] == true,
+      latitude: (map['latitude'] as num?)?.toDouble(),
+      longitude: (map['longitude'] as num?)?.toDouble(),
+      locationVerificationStatus:
+          map['location_verification_status']?.toString() ?? 'unverified',
+      nearbyLandmarks: rawLandmarks is List
+          ? rawLandmarks.map((item) => item.toString()).toList()
+          : const [],
     );
   }
 }
