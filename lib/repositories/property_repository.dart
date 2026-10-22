@@ -1,6 +1,13 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../data/sample_abuja_properties.dart';
 import '../models/property.dart';
+
+/// Sample listings are opt-in for local/demo builds only.
+/// Enable with: flutter run -d web-server --web-hostname 0.0.0.0
+/// --web-port 8080 --dart-define=USE_SAMPLE_PROPERTIES=true
+const bool _useSampleProperties =
+    bool.fromEnvironment('USE_SAMPLE_PROPERTIES', defaultValue: false);
 
 class PropertyRepository {
   const PropertyRepository();
@@ -8,6 +15,10 @@ class PropertyRepository {
   SupabaseClient get _client => Supabase.instance.client;
 
   Future<List<Property>> getPublishedProperties() async {
+    if (_useSampleProperties) {
+      return List<Property>.unmodifiable(sampleAbujaProperties);
+    }
+
     final rows = await _client
         .from('Properties')
         .select()
@@ -17,6 +28,12 @@ class PropertyRepository {
   }
 
   Future<List<Property>> getFeaturedProperties() async {
+    if (_useSampleProperties) {
+      return List<Property>.unmodifiable(
+        sampleAbujaProperties.where((property) => property.isFeatured),
+      );
+    }
+
     final rows = await _client
         .from('Properties')
         .select()

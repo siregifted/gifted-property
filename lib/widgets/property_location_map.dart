@@ -27,6 +27,7 @@ class PropertyLocationMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSample = property.title.startsWith('SAMPLE ONLY —');
     if (!property.hasCoordinates) {
       return Container(
         width: double.infinity,
@@ -114,9 +115,11 @@ class PropertyLocationMap extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                property.hasVerifiedLocation
-                    ? 'Location verified by the Gifted Property team'
-                    : 'Approximate or unverified location — confirm with our team before travelling',
+                isSample
+                    ? 'DEMO ONLY: this is an approximate neighbourhood test pin, not a real property address. Do not use it to arrange a viewing.'
+                    : property.hasVerifiedLocation
+                        ? 'Location verified by the Gifted Property team'
+                        : 'Approximate or unverified location — confirm with our team before travelling',
                 style: const TextStyle(height: 1.4),
               ),
             ),
@@ -149,7 +152,7 @@ class PropertyLocationMap extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: () => _openDirections(context),
             icon: const Icon(Icons.directions_outlined),
-            label: const Text('Get directions'),
+            label: Text(isSample ? 'Test approximate area in Maps' : 'Get directions'),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF0B1F33),
               padding: const EdgeInsets.symmetric(vertical: 16),
