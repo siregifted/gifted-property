@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/property.dart';
 import '../repositories/property_repository.dart';
 import '../widgets/property_card.dart';
 import 'properties_page.dart';
@@ -14,6 +15,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   static const PropertyRepository _propertyRepository = PropertyRepository();
   final TextEditingController _searchController = TextEditingController();
+  late final Future<List<Property>> _featuredPropertiesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _featuredPropertiesFuture = _propertyRepository.getFeaturedProperties();
+  }
 
   @override
   void dispose() {
@@ -207,7 +215,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 24),
                   FutureBuilder(
-                    future: _propertyRepository.getFeaturedProperties(),
+                    future: _featuredPropertiesFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Padding(
