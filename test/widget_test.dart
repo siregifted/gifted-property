@@ -60,7 +60,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Our Properties'), findsOneWidget);
-    expect(find.text('Guzape'), findsOneWidget);
+    expect(tester.widget<TextField>(find.byType(TextField).last).controller?.text, 'Guzape');
     expect(tester.takeException(), isNull);
   });
 
