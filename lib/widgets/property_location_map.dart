@@ -4,6 +4,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/property.dart';
+import '../pages/property_navigation_page.dart';
+import '../validation/navigation_policy.dart';
 
 class PropertyLocationMap extends StatelessWidget {
   final Property property;
@@ -16,6 +18,8 @@ class PropertyLocationMap extends StatelessWidget {
 
   bool get _canShowPin =>
       property.isSample || property.hasVerifiedLocation || _hasApproximatePin;
+
+  bool get _canPreviewRoute => canPreviewPropertyRoute(property);
 
   String get _locationNotice {
     if (property.isSample) {
@@ -94,11 +98,9 @@ class PropertyLocationMap extends StatelessWidget {
     }
 
     final point = LatLng(property.latitude!, property.longitude!);
-    final directionLabel = property.isSample
-        ? 'Open demo area in Maps'
-        : _hasApproximatePin
+    final directionLabel = _hasApproximatePin
         ? 'Open approximate area in Maps'
-        : 'Get directions';
+        : 'Open directions in Maps';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,18 +197,47 @@ class PropertyLocationMap extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => _openDirections(context),
-            icon: const Icon(Icons.directions_outlined),
-            label: Text(directionLabel),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF0B1F33),
-              padding: const EdgeInsets.symmetric(vertical: 16),
+        if (property.isSample)
+          const Text(
+            'Demo sample — navigation is disabled.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Color(0xFF704E00),
+              fontWeight: FontWeight.w700,
+            ),
+          )
+        else if (_canPreviewRoute) ...[
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => PropertyNavigationPage(property: property),
+                ),
+              ),
+              icon: const Icon(Icons.navigation_outlined),
+              label: const Text('Preview route in Gifted Property'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF0B1F33),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
             ),
           ),
-        ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _openDirections(context),
+              icon: const Icon(Icons.open_in_new),
+              label: Text(directionLabel),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF0B1F33),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

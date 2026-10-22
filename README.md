@@ -36,6 +36,10 @@ The app displays only approved HTTPS `PropertyMedia` records. Cover media sorts 
 
 The catalogue query is bounded to the 100 newest published rows and search filters that loaded set client-side; home requests at most three featured rows. This avoids unbounded startup queries, but **pagination and server-side search are still needed for larger inventories**.
 
+## Route preview prototype
+
+Eligible real property details include an in-app driving-route preview. The client explicitly starts it, grants foreground location permission, and sees the route line, estimated time/distance and next maneuver; the client can hand off to Google/Apple Maps for voice turn-by-turn guidance. The app does not save location history or request background location. To calculate the route, the client's origin and the property's allowed coordinates are sent to the public OSRM demo service. This is a prototype only: the endpoint is best-effort with no availability guarantee and should be replaced or self-hosted before public launch. Approximate pins require confirmation and are not property entrances; sample listings cannot be navigated. See [`docs/property-navigation.md`](docs/property-navigation.md).
+
 ## Real listing data and publication
 
 No genuine inventory is bundled in the client. Use the blank templates and checklist in `docs/` to collect and review authorized property information before publishing. Staff must verify the right to advertise, factual title/description/price/status, a safe public area label, coordinate precision and evidence, image/video rights, and media approval. Never infer a street address or verification status from a neighbourhood pin.

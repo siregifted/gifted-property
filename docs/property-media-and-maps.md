@@ -27,6 +27,8 @@ The Flutter UI also validates a coordinate pair before treating a location as ve
 
 “Verified” is explicit staff-entered status, not inferred by the app. Staff must retain the underlying evidence and update the status only after review. For `approximate`, staff must first generalize the stored coordinates to a safe neighbourhood point; the app cannot tell whether a coordinate is truly generalized. The app does not geocode, infer property pins or verify ownership.
 
+The buyer app also includes a foreground-only OSRM route-preview prototype. It requests device location only after the user chooses to start a route, then sends origin and destination coordinates to the public OSRM demo endpoint. Sample, unverified and invalid locations cannot be routed; approximate destinations require acknowledgement and stay labelled as area pins. OSRM demo has no service guarantee and must be replaced or self-hosted before a production launch. See [`docs/property-navigation.md`](property-navigation.md) for the privacy and provider boundary.
+
 ## Map tiles and attribution
 
 The map uses OpenStreetMap tiles with visible attribution and a link to the copyright page. Review the [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/) and [copyright page](https://www.openstreetmap.org/copyright) against expected traffic before a public launch. Configure an approved provider/fallback if the standard tile service is not suitable for expected traffic. No tile-service account or paid provider has been configured.

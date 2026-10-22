@@ -8,6 +8,8 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Gifted Property</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Your location is used while you view a route to a property. The start and destination coordinates are sent to the OSRM route service to calculate the road route.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
