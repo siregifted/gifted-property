@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/property.dart';
 import '../repositories/property_repository.dart';
 import '../widgets/property_card.dart';
+import '../widgets/explore_abuja_locations.dart';
 import 'properties_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -330,59 +331,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildLocationsSection() {
-    const locations = [
-      'Maitama',
-      'Asokoro',
-      'Katampe',
-      'Guzape',
-      'Jahi',
-      'Mabushi',
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 600;
-
-        return Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 20 : 40,
-            vertical: compact ? 40 : 60,
-          ),
-          color: const Color(0xFFF4F6F8),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1100),
-              child: Column(
-                children: [
-                  Text(
-                    'Explore Abuja',
-                    style: TextStyle(
-                      fontSize: compact ? 26 : 30,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF0B1F33),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    alignment: WrapAlignment.center,
-                    children: locations.map((location) {
-                      return ActionChip(
-                        avatar: const Icon(Icons.location_on, size: 18),
-                        label: Text(location),
-                        onPressed: () =>
-                            _openProperties(initialSearchQuery: location),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+    return ExploreAbujaLocations(
+      onLocationSelected: (location) =>
+          _openProperties(initialSearchQuery: location),
     );
   }
 }
