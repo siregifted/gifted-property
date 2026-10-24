@@ -28,6 +28,12 @@ A release web compile smoke-test is `flutter build web --release`; it compiles w
 
 The GitHub Actions workflow runs dependency resolution, analysis, both test configurations, and a release web compile. It does not publish or deploy the app.
 
+## Map tile configuration
+
+The detail and route maps share `MapTilesConfig`. By default they use the official HTTPS OpenStreetMap raster endpoint. Native requests identify the app with package ID `com.siregifted.giftedproperty`; the web entrypoint explicitly uses `strict-origin-when-cross-origin` so cross-origin map requests include the hosting origin as `Referer`. Ensure the hosting server/CDN does not override that policy with one that suppresses the header. OSM attribution remains visible and links to its copyright page. Do not add repeated retries for blocked requests.
+
+If the selected tile service needs to change, set `MAP_TILE_URL_TEMPLATE`, `MAP_TILE_ATTRIBUTION`, and `MAP_TILE_ATTRIBUTION_URL` with `--dart-define`; optionally set `MAP_TILE_API_KEY` for providers that use the `{api_key}` placeholder. These values are public in the built client. Configure only provider-issued client keys and follow that provider's terms, attribution, quotas, and pricing. The default OSM endpoint requires no account/API key and charges no tile fee, but is best-effort and may block traffic that does not comply with its policy. See [`docs/property-media-and-maps.md`](docs/property-media-and-maps.md#map-tiles-and-attribution).
+
 ## Supabase data boundary
 
 The buyer app reads only `public_properties` and `public_property_media`; it does not fall back to unrestricted `Properties` table queries if those views are unavailable. The prepared catalog migration adds `public_location` separately from the private address. A listing is visible only when published and assigned a non-empty public area. Exact addresses and coordinates are exposed only for verified rows with valid coordinate ranges; approximate rows expose an approximate pin; unverified or invalid pins and directions are withheld. Do not enter a street address in `public_location`.

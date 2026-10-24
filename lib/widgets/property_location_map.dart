@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../config/map_tiles_config.dart';
 import '../models/property.dart';
 import '../pages/property_navigation_page.dart';
 import '../validation/navigation_policy.dart';
@@ -118,8 +119,9 @@ class PropertyLocationMap extends StatelessWidget {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.siregifted.giftedproperty',
+                  urlTemplate: MapTilesConfig.urlTemplate,
+                  additionalOptions: MapTilesConfig.additionalOptions,
+                  userAgentPackageName: MapTilesConfig.userAgentPackageName,
                 ),
                 MarkerLayer(
                   markers: [
@@ -142,9 +144,10 @@ class PropertyLocationMap extends StatelessWidget {
                 RichAttributionWidget(
                   attributions: [
                     TextSourceAttribution(
-                      '© OpenStreetMap contributors',
+                      MapTilesConfig.attributionText,
+                      prependCopyright: false,
                       onTap: () => launchUrl(
-                        Uri.parse('https://www.openstreetmap.org/copyright'),
+                        Uri.parse(MapTilesConfig.attributionUrl),
                         mode: LaunchMode.externalApplication,
                       ),
                     ),
